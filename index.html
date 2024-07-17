@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CONWAYS GAME OF LIFE</title>
+    <!-- <link rel="stylesheet" -->
+    <!-- href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" /> -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"
+      integrity="sha512-CeIsOAsgJnmevfCi2C7Zsyy6bQKi43utIjdA87Q0ZY84oDqnI0uwfM9+bKiIkI75lUeI00WG/+uJzOmuHlesMA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      #bg {
+        background-image: url("./background.jpg");
+        background-size: cover;
+        background-position: center;
+        background-color: black;
+        animation: backgroundAnimation 50s infinite;
+      }
+
+      @keyframes backgroundAnimation {
+        0%,
+        100% {
+          transform: scale(1.5);
+        }
+
+        50% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-900 overflow-hidden">
+    <img
+      src="./background.jpg"
+      alt=""
+      id="bg"
+      class="h-screen w-screen absolute z-0"
+    />
+    <h1 class="text-[30px] relative text-white w-screen p-2 bg-red-60 absolute">
+      GAME OF LIFE BY ABDULLAH
+    </h1>
+    <div class="relative cursor-pointer">
+      <canvas id="canvas" class="rounded-xl z-20 top-0 absolute"></canvas>
+    </div>
+    <div
+      class="w-screen flex justify-center content-center absolute bottom-0 z-50 bg-red-50 bg-transparent"
+      id="controls"
+    >
+      <button
+        id="start"
+        class="bg-blue-30 flex items-center content-center p-3"
+        onclick="Restart()"
+      >
+        <svg
+          class="w-[6rem] h-[6rem] text-8xl text-gray-800 text-white"
+          aria-hidden="true"
+          id="restart"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"
+          />
+        </svg>
+      </button>
+      <button
+        id="start"
+        class="bg-blue-30 flex items-center content-center p-3"
+        onclick="playPause()"
+      >
+        <svg
+          class="w-[6rem] h-[6rem] text-8xl text-gray-800 text-white block"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          id="playIcon"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M8.6 5.2A1 1 0 0 0 7 6v12a1 1 0 0 0 1.6.8l8-6a1 1 0 0 0 0-1.6l-8-6Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <svg
+          class="w-[6rem] h-[6rem] text-8xl text-gray-800 text-white hidden"
+          id="pauseIcon"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M8 5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H8Zm7 0a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </button>
+      <button
+        id="start"
+        class="bg-blue-30 flex items-center content-center p-3"
+        onclick="Next()"
+      >
+        <svg
+          class="w-[6rem] h-[6rem] text-8xl text-gray-800 text-white"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m10 16 4-4-4-4"
+          />
+        </svg>
+      </button>
+    </div>
+    <img src="./cell.png" id="cellImg" class="hidden" />
+  </body>
+
+  <script>
+    //DOM Setup
+    let startInterval;
+
+    function Restart() {
+      drawGrid();
+    }
+
+    function Next() {
+      update();
+    }
+
+    //default DOM to stop backflow
+    playIcon.style.display = "block";
+    function playPause() {
+      const playIcon = document.getElementById("playIcon");
+      const pauseIcon = document.getElementById("pauseIcon");
+      if (playIcon.style.display === "block") {
+        playIcon.style.display = "none";
+        pauseIcon.style.display = "block";
+        startInterval = setInterval(update, 1000);
+      } else {
+        playIcon.style.display = "block";
+        pauseIcon.style.display = "none";
+        clearInterval(startInterval);
+      }
+    }
+
+    const removeControls = () => {
+      controls.style.display = "none";
+    };
+    let removeControlsTime;
+    const controls = document.getElementById("controls");
+    let mouseOnControl = false;
+    window.addEventListener("mousemove", () => {
+      controls.style.display = "flex";
+      window.clearTimeout(removeControlsTime);
+      if (!mouseOnControl) {
+        removeControlsTime = setTimeout(removeControls, 500);
+      }
+    });
+    controls.addEventListener("mousemove", () => (mouseOnControl = true));
+    controls.addEventListener("mouseleave", () => (mouseOnControl = false));
+    // initialize canvas
+    const canvas = new fabric.Canvas("canvas");
+
+    //setting size
+    const dimensions = { width: window.innerWidth, height: window.innerHeight };
+    canvas.setDimensions(dimensions);
+
+    //default settings
+    canvas.selection = false;
+    const cellImgElem = document.getElementById("cellImg");
+    const dimensionsImg = { width: 100, height: 100 };
+    const cells = [];
+    canvas.hoverCursor = "pointer";
+
+    // Creation of cell grid
+    function drawGrid() {
+      const cellNumber = {
+        x: dimensions.width / dimensionsImg.width,
+        y: dimensions.height / dimensionsImg.height - 1,
+      };
+      canvas.clear();
+      for (let i = 0; i < cellNumber.x; i++) {
+        cells[i] = [];
+        for (let j = 0; j < cellNumber.y; j++) {
+          let live = Math.floor(Math.random() * 5);
+
+          const cell = new fabric.Image(cellImgElem, {
+            left: i * dimensionsImg.width + Math.random() * 23,
+            top: j * dimensionsImg.height + Math.random() * 23,
+            angle: Math.random() * 40,
+            hasControls: false,
+            hasBorders: false,
+            selectable: false,
+          });
+          if (live !== 2) {
+            cell.filters.push(new fabric.Image.filters.Grayscale());
+            cell.applyFilters();
+          } else {
+            cell.filters = [];
+            cell.applyFilters();
+          }
+          cells[i].push(cell);
+          canvas.add(cell);
+        }
+      }
+      canvas.requestRenderAll();
+    }
+
+    drawGrid();
+
+    // Algorithm
+    const update = () => {
+      for (let i = 0; i < cells.length; i++) {
+        for (let j = 0; j < cells[0].length; j++) {
+          const liveNeighbors = getLiveNeighbors(i, j);
+          if (liveNeighbors < 2 || liveNeighbors > 3) {
+            cells[i][j].filters.push(new fabric.Image.filters.Grayscale());
+          } else if (liveNeighbors >= 2) {
+            cells[i][j].filters = [];
+          }
+          cells[i][j].applyFilters();
+        }
+      }
+
+      canvas.requestRenderAll();
+    };
+
+    //Make cell Live Code
+    canvas.on("object:selected", (options) => {
+      const { target } = options;
+      console.log(target);
+      if (target) {
+        target.evented = false;
+      }
+    });
+    canvas.on("mouse:down", function (event) {
+      const cell = event.target;
+      if (cell) {
+        if (cell.filters.length === 0) {
+          cell.filters.push(new fabric.Image.filters.Grayscale());
+        } else {
+          cell.filters = [];
+        }
+        cell.applyFilters();
+        clearInterval(startInterval);
+        canvas.requestRenderAll();
+        if (playIcon.style.display === "none")
+          startInterval = setInterval(update, 1000);
+      }
+    });
+
+    //Helper Function
+    function getLiveNeighbors(x, y) {
+      let liveNeighbors = 0;
+      if (
+        x !== 0 &&
+        y !== 0 &&
+        x !== cells.length - 1 &&
+        y !== cells[0].length - 1
+      ) {
+        if (cells[x - 1][y].filters.length === 0) liveNeighbors++;
+        if (cells[x + 1][y].filters.length === 0) liveNeighbors++;
+        if (cells[x][y + 1].filters.length === 0) liveNeighbors++;
+        if (cells[x][y - 1].filters.length === 0) liveNeighbors++;
+        if (cells[x - 1][y - 1].filters.length === 0) liveNeighbors++;
+        if (cells[x + 1][y - 1].filters.length === 0) liveNeighbors++;
+        if (cells[x - 1][y + 1].filters.length === 0) liveNeighbors++;
+        if (cells[x + 1][y + 1].filters.length === 0) liveNeighbors++;
+      } else if (x === 0 && y === 0) {
+        if (cells[x + 1][y].filters.length === 0) liveNeighbors++;
+        if (cells[x][y + 1].filters.length === 0) liveNeighbors++;
+        if (cells[x + 1][y + 1].filters.length === 0) liveNeighbors++;
+      } else if (x === 0 && y === cells[0].length - 1) {
+        if (cells[x + 1][y].filters.length === 0) liveNeighbors++;
+        if (cells[x][y - 1].filters.length === 0) liveNeighbors++;
+        if (cells[x + 1][y - 1].filters.length === 0) liveNeighbors++;
+      } else if (x === cells.length - 1 && y === 0) {
+        if (cells[x - 1][y].filters.length === 0) liveNeighbors++;
+        if (cells[x][y + 1].filters.length === 0) liveNeighbors++;
+        if (cells[x - 1][y + 1].filters.length === 0) liveNeighbors++;
+      } else if (x === cells.length - 1 && y === cells[0].length - 1) {
+        if (cells[x - 1][y].filters.length === 0) liveNeighbors++;
+        if (cells[x][y - 1].filters.length === 0) liveNeighbors++;
+        if (cells[x - 1][y - 1].filters.length === 0) liveNeighbors++;
+      }
+
+      return liveNeighbors;
+    }
+  </script>
+</html>
